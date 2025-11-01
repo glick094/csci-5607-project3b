@@ -1,0 +1,52 @@
+# Camera setup
+camera_pos: 0 0 0
+camera_fwd: 0 0 -1
+camera_up: 0 1 0
+camera_fov_ha: 40
+
+# Film settings
+film_resolution: 640 480
+output_image: writeup/Images/materials_diffuse_specular_reflection_refraction/mirror_reflection.png
+
+# Background color - darker to make reflections pop
+background: 0.25 0.25 0.4
+
+vertex: -100 -1 -100
+vertex: -100 -1  100 
+vertex:  100 -1  100 
+vertex:  100 -1 -100
+
+normal: 0 0 1
+
+# Ground plane - more reflective
+material: 0.1 0.1 0.1 0.4 0.4 0.4 0.3 0.3 0.3 16 0 0 0 1
+#sphere: 0 -100 5 99
+triangle: 2 1 0 1 1 1
+triangle: 0 2 3 1 1 1 
+#triangle: 0 1 2 
+#triangle: 0 2 3
+
+# Lighting - bright to show reflections
+ambient_light: 0.6 0.6 0.6
+#point_light: 20 20 20 2 5 2
+point_light: 3 3 3 -2 3 3
+# point_light: 10 10 10 0 4 1
+# point_light: 10 10 10 0 4 8
+
+max_depth: 15
+
+# Center mirror ball - chrome sphere
+#material: 0 0 0 0 0 0 1 1 1 100 0 0 0 0.9
+
+#completely white ambient sphere
+#material: 1 1 1 0 0 0 0 0 0 100 0 0 0 0.9
+#completely diffuse sphere
+#material: 0 0 0 1 1 1 0 0 0 100 0 0 0 0.9
+#complete specular sphere
+#material: 0 0 0 0 0 0 1 1 1 100 0 0 0 0.9
+#mirror ball
+#material: 0 0 0 1 1 1 1 1 1 100 0 0 0 0.9
+#material: 0.1 0.1 0.1 1 1 1 1 1 1 100 0 0 0 0.9
+material: 0.1 0.1 0.1 0.8 0.8 0.8 1 1 1 100 0.5 0.5 0.5 1.0
+sphere: 0 0.5 5 0.8
+

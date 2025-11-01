@@ -1,0 +1,105 @@
+# Test of oriented torus with arbitrary normals
+
+#inside tori
+camera_pos: 0 0 -6
+camera_fwd: 0 0 -1 
+camera_up: 0 1 0
+camera_fov_ha: 45
+
+#outside tori
+#camera_pos: 0 10 -7
+#camera_fwd: 0 2 -1 
+#camera_up: 0 1 0
+#camera_fov_ha: 35
+
+output_image: writeup/Images/implicit_surfaces/tori_illusion.png
+
+# Bright overhead light
+point_light: 10 10 10 0 8 0
+point_light: 8 8 8 -5 5 -5
+ambient_light: .3 .3 .3
+background: 0.4 0.5 0.6
+
+max_depth: 4
+
+#material: 1 0 0 1 0 0 .5 .5 .5 90 0 0 0 1.0
+#material: 0 1 0 0 1 0 .5 .5 .5 90 0 0 0 1.0
+# 12 tori in a circular ring (all the same normals)
+#sdf_torus_oriented:  5.000 0.000  0.000 0.8 0.25 0 1 0
+#sdf_torus_oriented:  4.330 0.000  2.500 0.8 0.25 0 1 0
+#sdf_torus_oriented:  2.500 0.000  4.330 0.8 0.25 0 1 0
+#sdf_torus_oriented:  0.000 0.000  5.000 0.8 0.25 0 1 0
+#sdf_torus_oriented: -2.500 0.000  4.330 0.8 0.25 0 1 0
+#sdf_torus_oriented: -4.330 0.000  2.500 0.8 0.25 0 1 0
+#sdf_torus_oriented: -5.000 0.000  0.000 0.8 0.25 0 1 0
+#sdf_torus_oriented: -4.330 0.000 -2.500 0.8 0.25 0 1 0
+#sdf_torus_oriented: -2.500 0.000 -4.330 0.8 0.25 0 1 0
+#sdf_torus_oriented:  0.000 0.000 -5.000 0.8 0.25 0 1 0
+#sdf_torus_oriented:  2.500 0.000 -4.330 0.8 0.25 0 1 0
+#sdf_torus_oriented:  4.330 0.000 -2.500 0.8 0.25 0 1 0
+
+# 12 tori in a tangent-oriented ring
+#sdf_torus_oriented:  5.000 0.000  0.000 2.8 0.25  0.000 0.000  1.000
+#sdf_torus_oriented:  4.330 0.000  2.500 2.8 0.25 -0.500 0.000  0.866
+#sdf_torus_oriented:  2.500 0.000  4.330 2.8 0.25 -0.866 0.000  0.500
+#sdf_torus_oriented:  0.000 0.000  5.000 2.8 0.25 -1.000 0.000  0.000
+#sdf_torus_oriented: -2.500 0.000  4.330 2.8 0.25 -0.866 0.000 -0.500
+#sdf_torus_oriented: -4.330 0.000  2.500 2.8 0.25 -0.500 0.000 -0.866
+#sdf_torus_oriented: -5.000 0.000  0.000 2.8 0.25  0.000 0.000 -1.000
+#sdf_torus_oriented: -4.330 0.000 -2.500 2.8 0.25  0.500 0.000 -0.866
+#sdf_torus_oriented: -2.500 0.000 -4.330 2.8 0.25  0.866 0.000 -0.500
+#sdf_torus_oriented:  0.000 0.000 -5.000 2.8 0.25  1.000 0.000  0.000
+#sdf_torus_oriented:  2.500 0.000 -4.330 2.8 0.25  0.866 0.000  0.500
+#sdf_torus_oriented:  4.330 0.000 -2.500 2.8 0.25  0.500 0.000  0.866
+
+
+# 12 tori tangent and tilted upward
+#sdf_torus_oriented:  5.000 0.000  0.000 2.8 0.25  0.000 0.423  0.906
+#sdf_torus_oriented:  4.330 0.000  2.500 2.8 0.25 -0.453 0.423  0.785
+#sdf_torus_oriented:  2.500 0.000  4.330 2.8 0.25 -0.785 0.423  0.453
+#sdf_torus_oriented:  0.000 0.000  5.000 2.8 0.25 -0.906 0.423  0.000
+#sdf_torus_oriented: -2.500 0.000  4.330 2.8 0.25 -0.785 0.423 -0.453
+#sdf_torus_oriented: -4.330 0.000  2.500 2.8 0.25 -0.453 0.423 -0.785
+#sdf_torus_oriented: -5.000 0.000  0.000 2.8 0.25  0.000 0.423 -0.906
+#sdf_torus_oriented: -4.330 0.000 -2.500 2.8 0.25  0.453 0.423 -0.785
+#sdf_torus_oriented: -2.500 0.000 -4.330 2.8 0.25  0.785 0.423 -0.453
+#sdf_torus_oriented:  0.000 0.000 -5.000 2.8 0.25  0.906 0.423  0.000
+#sdf_torus_oriented:  2.500 0.000 -4.330 2.8 0.25  0.785 0.423  0.453
+#sdf_torus_oriented:  4.330 0.000 -2.500 2.8 0.25  0.453 0.423  0.785
+
+
+# 30 tori tilted 25deg
+material: 1 0 0 1 0 0 .5 .5 .5 90 0 0.3 0 1.0
+sdf_torus_oriented: 5.000 0.000 0.000 2.8 0.25 -0.000 0.423 0.906
+sdf_torus_oriented: 4.568 0.000 2.034 2.8 0.25 -0.369 0.423 0.828
+sdf_torus_oriented: 3.346 0.000 3.716 2.8 0.25 -0.674 0.423 0.606
+sdf_torus_oriented: 1.545 0.000 4.755 2.8 0.25 -0.862 0.423 0.280
+sdf_torus_oriented: -0.523 0.000 4.973 2.8 0.25 -0.901 0.423 -0.095
+sdf_torus_oriented: -2.500 0.000 4.330 2.8 0.25 -0.785 0.423 -0.453
+sdf_torus_oriented: -4.045 0.000 2.939 2.8 0.25 -0.533 0.423 -0.733
+sdf_torus_oriented: -4.891 0.000 1.040 2.8 0.25 -0.188 0.423 -0.887
+sdf_torus_oriented: -4.891 0.000 -1.040 2.8 0.25 0.188 0.423 -0.887
+sdf_torus_oriented: -4.045 0.000 -2.939 2.8 0.25 0.533 0.423 -0.733
+sdf_torus_oriented: -2.500 0.000 -4.330 2.8 0.25 0.785 0.423 -0.453
+sdf_torus_oriented: -0.523 0.000 -4.973 2.8 0.25 0.901 0.423 -0.095
+sdf_torus_oriented: 1.545 0.000 -4.755 2.8 0.25 0.862 0.423 0.280
+sdf_torus_oriented: 3.346 0.000 -3.716 2.8 0.25 0.674 0.423 0.606
+sdf_torus_oriented: 4.568 0.000 -2.034 2.8 0.25 0.369 0.423 0.828
+
+
+material: 0.81 0.68 0.09 0 1 0 .5 .5 .5 90 0.3 0 0 1.0
+sdf_torus_oriented: 4.891 0.000 1.040 2.8 0.25 -0.188 0.423 0.887
+sdf_torus_oriented: 4.045 0.000 2.939 2.8 0.25 -0.533 0.423 0.733
+sdf_torus_oriented: 2.500 0.000 4.330 2.8 0.25 -0.785 0.423 0.453
+sdf_torus_oriented: 0.523 0.000 4.973 2.8 0.25 -0.901 0.423 0.095
+sdf_torus_oriented: -1.545 0.000 4.755 2.8 0.25 -0.862 0.423 -0.280
+sdf_torus_oriented: -3.346 0.000 3.716 2.8 0.25 -0.674 0.423 -0.606
+sdf_torus_oriented: -4.568 0.000 2.034 2.8 0.25 -0.369 0.423 -0.828
+sdf_torus_oriented: -5.000 0.000 0.000 2.8 0.25 -0.000 0.423 -0.906
+sdf_torus_oriented: -4.568 0.000 -2.034 2.8 0.25 0.369 0.423 -0.828
+sdf_torus_oriented: -3.346 0.000 -3.716 2.8 0.25 0.674 0.423 -0.606
+sdf_torus_oriented: -1.545 0.000 -4.755 2.8 0.25 0.862 0.423 -0.280
+sdf_torus_oriented: 0.523 0.000 -4.973 2.8 0.25 0.901 0.423 0.095
+sdf_torus_oriented: 2.500 0.000 -4.330 2.8 0.25 0.785 0.423 0.453
+sdf_torus_oriented: 4.045 0.000 -2.939 2.8 0.25 0.533 0.423 0.733
+sdf_torus_oriented: 4.891 0.000 -1.040 2.8 0.25 0.188 0.423 0.887

@@ -1,0 +1,55 @@
+# Dramatic mirror ball scene - spheres positioned to show reflections
+# Camera setup
+camera_pos: 0 0 0
+camera_fwd: 0 0 -1
+camera_up: 0 1 0
+camera_fov_ha: 40
+
+# Film settings
+film_resolution: 640 480
+output_image: writeup/Images/materials_diffuse_specular_reflection_refraction/reflection_spheres.png
+
+# Background color - darker to make reflections pop
+background: 0.05 0.05 0.1
+
+# Ground plane - more reflective
+material: 0.1 0.1 0.1 0.4 0.4 0.4 0.3 0.3 0.3 16 0 0 0 1
+sphere: 0 -100 5 99
+
+# Center mirror ball - chrome sphere
+material: 0 0 0 0 0 0 1 1 1 100 0 0 0 1 0.9
+sphere: 0 0.5 5 0.8
+
+# Red sphere - LEFT side, in front of mirror (will be reflected)
+material: 0.2 0 0 1 0 0 0.4 0.4 0.4 32 0 0 0 1
+sphere: -2 0.5 4 0.5
+
+# Green sphere - RIGHT side, in front of mirror (will be reflected)
+material: 0 0.2 0 0 1 0 0.4 0.4 0.4 32 0 0 0 1
+sphere: 2 0.5 4 0.5
+
+# Yellow sphere - ABOVE mirror (will be reflected on top)
+material: 0.3 0.3 0 1 1 0 0.4 0.4 0.4 32 0 0 0 1
+sphere: 0 2.5 5 0.6
+
+# Cyan sphere - in front, slightly to the side
+material: 0 0.3 0.3 0 1 1 0.4 0.4 0.4 32 0 0 0 1
+sphere: 1 1 3.5 0.4
+
+# Magenta sphere - in front, other side
+material: 0.3 0 0.3 1 0 1 0.4 0.4 0.4 32 0 0 0 1
+sphere: -1 1 3.5 0.4
+
+# Blue sphere - far right (partially visible in reflection)
+material: 0 0 0.3 0 0 1 0.6 0.6 0.6 32 0 0 0 1
+#sphere: 3 0.5 5 0.5
+sphere: 0 -.2 4 0.2
+
+# Lighting - bright to show reflections
+ambient_light: 0.4 0.4 0.4
+point_light: 20 20 20 2 5 2
+point_light: 5 5 5 -2 3 3
+point_light: 10 10 10 0 4 1
+point_light: 10 10 10 0 4 8
+
+max_depth: 15

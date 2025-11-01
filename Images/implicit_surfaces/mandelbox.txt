@@ -1,0 +1,37 @@
+# Camera setup
+#camera_pos: 0 0.5 -6
+#camera_fwd: 0 0 -1
+#camera_up: 0 1 0
+#camera_fov_ha: 35
+
+# Film settings
+film_resolution: 800 600
+output_image: writeup/Images/implicit_surfaces/mandelbox.png
+
+#White overhead light
+#point_light: 8 8 8 0 6 8
+#point_light: 120 120 120 20 20 10
+#point_light: 30 30 30 2 2 5
+point_light: 1 2 1 0 3 .5
+directional_light: .6 .6 .6 0 -1 -.5
+#point_light: 50 50 50 10 5 -5
+ambient_light: .4 .4 .4
+#background: .73 .83 1
+background: .5 .75 .93  # Sky blue
+
+material: 0.1 0.38 0.09 0.4 0.4 0 .1 .1 .1 90 0.5 0.5 0 1.0
+
+#overview version
+camera_pos: 0 0 -8
+camera_fwd: 0 0 -1
+camera_up: 0 1 0
+camera_fov_ha: 35
+sdf_mandelbox: 0 0 0 5 2
+
+
+#groovy version
+#camera_pos: 0 0.5 -6
+#camera_fwd: 0 0 -1
+#camera_up: 0 1 0
+#camera_fov_ha: 35
+#sdf_mandelbox: 0 0 0 7 2

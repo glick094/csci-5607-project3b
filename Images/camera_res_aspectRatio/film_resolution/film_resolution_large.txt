@@ -1,0 +1,19 @@
+camera_pos: 0 0 0
+camera_fwd: 0 0 -1
+camera_up: 0 1 0
+camera_fov_ha: 45
+
+film_resolution: 1200 900
+output_image: writeup/Images/camera_res_aspectRatio/film_resolution/film_resolution_large.png
+
+background: 0.7 0.7 0.75
+
+ambient_light: 0.52 0.52 0.52
+
+# Ground plane - more reflective
+material: 0.1 0.1 0.1 0.4 0.4 0.4 0.3 0.3 0.3 16 0 0 0 1
+sphere: 0 -100 5 99
+
+# Center mirror ball - chrome sphere
+material: 0.5 0.5 0.7 0.6 0.6 0.6 0.8 0.8 0.8 30 0 0 0 0.2
+sphere: 0 0.2 3 0.8
