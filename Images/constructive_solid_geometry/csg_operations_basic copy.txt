@@ -1,0 +1,49 @@
+# Camera setup
+camera_pos: 0 1 0
+camera_fwd: 0 0 -1
+camera_up: 0 1 0
+camera_fov_ha: 25
+
+# Film settings
+film_resolution: 800 600
+output_image: writeup/ShowcaseScenes/constructive_solid_geometry/csg_operations_basic.png
+
+# Background color
+background: 0.2 0.2 0.3
+
+# Lighting
+ambient_light: 0.3 0.3 0.3
+point_light: 15 15 15 3 5 2
+point_light: 8 8 8 -3 4 3
+
+# Ground plane
+material: 0.1 0.1 0.1 0.5 0.5 0.5 0.2 0.2 0.2 16 0 0 0 1
+sphere: 0 -1000 8 999
+
+# === CSG UNION (left side) ===
+# Two overlapping spheres combined into one object
+# Sphere 0 is ground, so these are spheres 1 and 2
+material: 0.2 0.1 0.1 0.8 0.3 0.3 0.4 0.4 0.4 32 0 0 0 1
+sphere: -3 1 8 1.0
+# material: 0.2 0.6 0.1 0.8 0.6 0.3 0.4 0.4 0.4 32 0 0 0 1
+sphere: -2.3 1.5 8 0.8
+csg_union: 1 2
+
+# === CSG INTERSECTION (center) ===
+# Lens-shaped object where two spheres overlap
+# These are spheres 3 and 4
+material: 0.1 0.2 0.1 0.3 0.8 0.3 0.4 0.4 0.4 32 0 0 0 1
+sphere: 0 1 8 1.0
+# material: 0.1 0.2 0.4 0.3 0.8 0.6 0.4 0.4 0.6 32 0 0 0 1
+sphere: 0.8 1 8 1.0
+csg_intersection: 3 4
+
+# === CSG DIFFERENCE (right side) ===
+# Large sphere with smaller sphere subtracted (creating a cavity)
+# These are spheres 5 and 6
+material: 0.1 0.1 0.2 0.3 0.3 0.8 0.5 0.5 0.5 32 0 0 0 1
+sphere: 3 1 8 1.2
+sphere: 3.6 0.9 7 1.0
+csg_difference: 5 6
+
+max_depth: 4

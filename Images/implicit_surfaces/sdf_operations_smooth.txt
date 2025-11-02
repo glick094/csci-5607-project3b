@@ -1,0 +1,76 @@
+# Test of oriented torus with arbitrary normals
+#camera_pos: -6 3 -4
+#camera_fwd: -.77 -0.1 -.64
+#camera_pos: 6 3 4
+#camera_fwd: 2 0 0 
+#camera_up: 0 1 0.5
+#camera_pos: 5 3 3
+#camera_fwd: 2 0 0 
+#camera_up: 0 2.5 0.75
+
+camera_pos: 0 1 -3
+camera_fwd: 0 0 -1 
+camera_up: 0 1 0
+camera_fov_ha: 35
+output_image: writeup/Images/implicit_surfaces/sdf_operations_smooth.png
+
+# Bright overhead light
+point_light: 10 10 10 0 8 0
+point_light: 8 8 8 -5 5 -5
+ambient_light: .3 .3 .3
+background: 0.4 0.5 0.6
+
+max_depth: 3
+
+# Ground plane
+material: .75 .75 .75 .75 .75 .75 .3 .3 .3 32 0 0 0 1.0
+diffuse_texture: image Textures/Texturelabs_Concrete_159S.jpg
+#diffuse_texture: image Textures/Texturelabs_Brick_142S.jpg
+sdf_plane: 0 1 0 0
+#sphere: 0 -100 0 100
+
+#x >> y >> z >> major >> minor >> nx >> ny >> nz;
+
+#gold chain
+# Blue torus - Y-axis (straight up)
+material: 1 0.8 0 1 0 0 .9 .5 .5 50 0 0 0 1.0
+sdf_torus_oriented: -2 1.0  4.0 0.6 0.25 0 0.8 1
+sdf_torus_oriented: -2 1.75 3.5 0.6 0.25 0.5 0.8 1
+sdf_torus_oriented: -2 2.5  3.0 0.6 0.25 0 0.8 1
+sdf_torus_oriented: -2 3.25 2.5 0.6 0.25 0.5 0.8 1
+#sdf_union: 1 2 3 4
+sdf_smooth_union: 0.25 1 2 3 4
+
+#cyan chain
+material: 0 0.8 0.8 0 0 1 .5 .5 .5 50 0 0 0 1.0
+sdf_torus_oriented: -4.55 1.0  4.0 0.6 0.25 0 0.8 1
+material: 0.8 0 0.8 0 0 1 .5 .5 .5 50 0 0 0 1.0
+sdf_torus_oriented: -4.55 1.75 3.5 0.6 0.25 0.5 0.8 1
+material: 0 0.8 0.8 0 0 1 .5 .5 .5 50 0 0 0 1.0
+sdf_torus_oriented: -4.55 2.5  3.0 0.6 0.25 0 0.8 1
+material: 0.8 0 0.8 0 0 1 .5 .5 .5 50 0 0 0 1.0
+sdf_torus_oriented: -4.55 3.25 2.5 0.6 0.25 0.5 0.8 1
+#sdf_union: 5 6 7 8
+
+
+material: 1 0 0 1 0 0 .5 .5 .5 50 0 0 0 1.0
+#sdf_torus_oriented: 0 2 4 0.8 0.25 1 0 1
+#sdf_torus_oriented: 0 2 6 0.8 0.25 1 0 1
+#sdf_torus_oriented: 0 2 8 0.8 0.25 1 0 1
+#sdf_torus_oriented: 0 2 10 0.8 0.25 1 0 1
+#sdf_union: 1 2 3 4
+
+# Red torus - Y-axis (straight up)
+material: 1 0 0 1 0 0 .5 .5 .5 50 0 0 0 1.0
+sdf_torus_oriented: 0 3 2 0.8 0.25 1 0 1
+
+# Green torus - Y-axis (straight up)
+material: 0 1 0 0 1 0 .5 .5 .5 50 0 0 0 1.0
+sdf_torus_oriented: 1.4 3 1.5 0.8 0.25 -0.1 1 1
+#sdf_union: 5 6
+
+material: 0 0 1 0 0 1 .5 .5 .5 50 0 0 0 1.0
+sdf_torus_oriented: 0.5   1 1   0.8 0.25  1.0 0 1
+sdf_torus_oriented: 1.9   1 0.5 0.8 0.25 -0.1 1 1
+#sdf_union: 7 8
+sdf_smooth_union: 0.8 11 12

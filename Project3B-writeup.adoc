@@ -4,6 +4,7 @@
 :description: CSCI 5607 - Computer Graphics 1
 :source-highlighter: pygments
 :stem: latexmath
+:eqnums:
 :toc: left
 :toclevels: 4
 :revdate: 2025-10-31
@@ -14,17 +15,15 @@
 CSCI 5607 (Fall 2025)
 
 
-Note, I've tried to set up this document both in terms of simplicity to understand my ray tracer implementation, but also make it easy to grade. 
-
-To make grading easy, at the top of this document, I've included the checklist of requirements, features, and extra credit I completed for the project. Each has check box showing it is complete, and a link to that section of the report. 
-
-The body of the document walks through the ray tracer as if I were to explain it to someone. I first explain 
+I've tried to set up this document both in terms of simplicity to understand my ray tracer implementation, but also make it easy to grade. 
+At the top of this document, I've included the checklist of <<requirements, requirements>>, <<additional-features, features>>, and <<extra-credit, extra credit>> I completed for the project. Each has check box showing it is complete, and a link to that section of the report. The body of the document walks through the ray tracer as if I were to explain it to someone, and is prefaced in the <<overview, Overview>> 
 
 == Grading
 === Requirements
 
 // It will be worth 85/100 points to get these basics features:
 
+[#requirements]
 * [x] Arbitrary <<camera-pos, camera placement>>, <<film-resolution, film resolution>>, and <<camera-fov-ha, aspect ratio>>
 * [x] Arbitrary scenes with <<spheres, spheres>>, <<triangles, triangles-no-normals>> (both without and <<triangles-with-normals, with vertex normals>>), and arbitrary <<background-colors, background colors>>
 * [x] Arbitrary <<materials, materials>>, including <<diffuse-lighting, diffuse>> and <<specular-lighting, specular>> shading, <<reflections, reflections>>, and <<refractions, refractions>>
@@ -35,11 +34,15 @@ The body of the document walks through the ray tracer as if I were to explain it
 
 === Additional Features: 
 
+[#additional-features]
 * [x] (5) <<procedural-texturing, Procedural texturing>> or normal mapping (checkerboard, wood, marble, mandelbrot set, etc..)
-* [x] (10) <<parallelization, Parallelize>> the raytracer (and analyze the performance gains as you add more processors!)
+//* [x] (10) <<parallelization, Parallelize>> the raytracer (and analyze the performance gains as you add more processors!)
+* [x] (5) <<spot-lights, Spot lights>>
+* [x] (5) <<textures, Texture mapping>>
 
 === Extra credit
 
+[#extra-credit]
 * [x] (5) <<csg, Constructive Solid Geometry>> (<<csg-union, union>>, <<csg-diff, difference>>, and <<csg-intersect, intersection>> of primitives)
 * [x] (10) An acceleration structure: <<bvh, BVH>>, BSP, OctTree, etc. (measure the performance impact on different scenes!)
 // * [ ] (5) Adaptive supersampling (must show a speedup over non-adaptive)
@@ -95,15 +98,26 @@ The body of the document walks through the ray tracer as if I were to explain it
 
 == Writeup
 
-Overall, I found lots of useful resources online, but in particular I heavily relied on https://gabrielgambetta.com/computer-graphics-from-scratch[Computer Graphics from Scratch] by Gabriel Gambetta, the https://iquilezles.org/articles/[articles] from Inigo Quilez. 
+[#overview]
+Overall, I found lots of useful resources online, but in particular I heavily relied on https://gabrielgambetta.com/computer-graphics-from-scratch[Computer Graphics from Scratch] by Gabriel Gambetta, the https://iquilezles.org/articles/[articles] from Inigo Quilez, and https://raytracing.github.io/books/RayTracingInOneWeekend.html[Ray tracing in one weekend]. I was influenced by https://github.com/ssloy/tinyraytracer/tree/master[tinyraytracer] and https://github.com/tcbrindle/raytracer.hpp/tree/master[compile-time ray tracer] to help optimize my code and consider different perspectives. 
 
-I am going to walk through talking about the ray tracer from the building blocks that allow us to make a complete ray tracer. We first start with the frustum, or the orientation of the camera and the viewport into the screen.
+I am going to walk through talking about the ray tracer from the building blocks that allow us to make a complete ray tracer. I first start with the frustum, or the orientation of the camera and the viewport into the screen.
 
-Then we talk about lighting, since we can't have ray tracing without light! So 
+Then I describe our lighting, since you can't have ray tracing without light! So we'll go through ambient lighting, adding point, directional, and spot lights, how these lights can create shadows, and finally how light may interact with an object via reflection and refraction. 
 
-=== Frustum
+This sets the stage for talking about my approach to color and materials. I use the phong model to incorporate our components of light for ambient, diffuse, specular, and transmissive components of our materials, to compute the color of light seen by our camera. Then I talk about other ways of making interesting materials, by adding texture to shapes, both from an image (interpolated onto the shape) and using procedural texturing (function based texturing). 
 
-image:https://gabrielgambetta.com/computer-graphics-from-scratch/images/03-camera-orientation.png[orientation of camera, 300]    image:https://gabrielgambetta.com/computer-graphics-from-scratch/images/03-basic-raytracer.png[basics of ray tracing, 300 ]
+Once we have the basis for our viewport, our lighting, and our colors and materials, we are finally ready to look at something! I describe our different geometries. We built first from spheres and triangles. Using these primitives, we can then build more complex shapes by combining those primitives to make constructive solid geometries, using unions, difference, and intersection operators. Furthermore, instead of being limited to defining vertices and normals (for more complex lighting) for every point and shape, we can instead provide an analytic equation that defines a surface, and create implicit shapes. This opens the door to all sorts of geometries, from tori, cylinders, and even fractal geometries. We do this by creating a signed distance function, which simply returns positive values for points inside and negative values for points outside a geometric boundary. 
+
+Finally, I walthrough 
+
+=== Viewing Frustum
+
+[cols="^1,^1"]
+|===
+|image:https://gabrielgambetta.com/computer-graphics-from-scratch/images/03-camera-orientation.png[orientation of camera, 300]    
+|image:https://gabrielgambetta.com/computer-graphics-from-scratch/images/03-basic-raytracer.png[basics of ray tracing, 300 ]
+|=== 
 
 ==== Camera placement, film resolution, and aspect ratio
 
@@ -153,6 +167,7 @@ camera_fov_ha: 45
 film_resolution: width height
 ----
 
+[.text-center]
 image:https://gabrielgambetta.com/computer-graphics-from-scratch/images/03-viewport.png[viewport]
 
 Film resolution is specified directly in pixels via the `film_resolution: width height` command, and the aspect ratio is automatically computed from these dimensions. 
@@ -193,18 +208,38 @@ The half-angle vertical FOV (`camera_fov_ha`) is used to compute the distance `d
 
 === Lighting 
 
-==== Ambient Lighting
+==== Light sources 
 
-[#ambient-light]
+We have a few different types of lights. We have ambient light which is the uniform non-directional "world" light, point lights which emit light in all directions radially (and falls off with the inverse-square law), directional lights off at infinity such that emitted light is always parallel, and spot lights which emit light radially within a cone shape. In <<typesoflights>> we can see a simple example of each of these light sources and how they are additive in a overall rendering. 
+
+.Types of lights
+[#typesoflights, cols="^1,^1,^1,^1,^1"]
+|===
+|image:Images/ambient_light/ambient_light_sphere.png[ambientHigh] + 
+`ambient_light:  0 .5 0`
+|image:Images/point_lights/point_light_sphere.png[pointSphere] + 
+`point_light: 0 .5 0 1 0 1`
+|image:Images/directional_lights/directional_light_sphere.png[directionalSphere] + 
+`directional_light: 0 .5 0 1 0 1`
+|image:Images/spot_lights/spot_light_sphere.png[spotSphere] + 
+`spot_light: 0 .5 0 1 0 1 0 1 2 45 90`
+|image:Images/spot_lights/all_lights_sphere.png[allLightsSphere] + 
+`ambient_light + point_light + directional_light + spot_light`
+|===
+
+===== Ambient Lighting
+
+[#ambient-light, Ambient Light]
 ----
 ambient_light: r g b
 ----
 
-The ambient light color (specified by `ambient_light` in the scene file) is multiplied component-wise with each material's ambient coefficients `(ar, ag, ab)` to initialize the base illumination for every surface point, providing constant lighting independent of geometry or light positions. 
+The ambient light color (specified by `ambient_light` in the scene file) is multiplied component-wise with each `(ar, ag, ab)` coefficients (material's ambient components, see the <<materials, Materials section>> for more) to initialize the base illumination for every surface point, providing constant lighting independent of geometry or light positions. 
 // (lines 382-384).
+spot light with inner and outer angle
 
 .Varying `ambient_light` with (r, g, b) listed
-[cols="^1,^1,^1,^1"]
+[cols="^.^1,^.^1,^.^1,^.^1"]
 |===
 |image:Images/ambient_light/ambient_sphere.png[ambientSphere] + 
 `ambient_sphere.txt`
@@ -218,37 +253,95 @@ The ambient light color (specified by `ambient_light` in the scene file) is mult
 
 Ambient lighting provides a simple approximation of global illumination by applying a uniform light contribution to all surfaces in the scene. The ambient contribution is computed by multiplying the global ambient light color by each surface's material ambient color, ensuring that shadowed areas are never completely black and providing realistic fill light throughout the scene. This technique is computationally efficient and effective for simulating light that has scattered multiple times throughout the environment, preventing harsh contrast between lit and shadowed regions.
 
-==== Point, Directional, and Spot lights
+===== Point Lights
 
-[#point-lights]
+[#point-lights, Point Lights]
 ----
 point_light: r g b  x y z
 ----
-The raytracer implements both point lights and directional lights with physically accurate lighting models. Point lights are positioned at specific 3D locations and use inverse-square falloff (1/distance²) to simulate realistic light attenuation, making them ideal for localized light sources like lamps or torches. 
+The raytracer implements both point lights and directional lights with physically accurate lighting models. Point lights are positioned at specific 3D locations and use inverse-square falloff stem:[(\frac{1}{d^2})] to simulate realistic light attenuation, making them ideal for localized light sources like lamps or torches. See <<typesoflights>> for examples. Below the left diagram from Gambetta, showing two point lights a different positions will have different incident stem:[\vec{l}] at point stem:[Q]. The right diagram shows a point light will have different incident vectors when hitting a flat object. 
 
-[#directional-lights]
+[caption=, cols="^.^1,^.^1"]
+|===
+|image:https://gabrielgambetta.com/computer-graphics-from-scratch/images/05-point-light.png[point-light-diagram]
+|image:http://i.imgur.com/LUNLBhQ.png[] 
+// source: https://www.gamedev.net/blogs/entry/2260865-shadows-and-point-lights/
+|===
+
+And here's some examples with different point lights
+
+.Varying `point_light` with (r, g, b | x, y, z) listed
+[cols="^1,^1,^1"]
+|===
+|image:Images/point_lights/point_light_single.png[pointLightSingle] + 
+`(5,5,5, -1,1,0)`
+|image:Images/point_lights/point_light_multiple.png[pointLightMultiple] + 
+`(5,5,5, -1.0,1.0,0.0)` +
+`(2,2,2,  2.0,0.5,2.8)` +
+`(5,5,5,  0.0,3.0,3.0)`
+|image:Images/point_lights/point_light_colors.png[pointLightColors] + 
+`(5.0,0.1,0.1, -1.0,1.0,0.0)` +
+`(0.1,5.0,0.1,  2.0,0.5,2.8)` +
+`(0.1,0.1,5.0,  0.0,3.0,3.0)`
+|===
+
+
+===== Directional Lights
+
+[#directional-lights, Directional Lights]
 ----
 directional_light: r g b  x y z
 ----
-Directional lights, on the other hand, are defined by a direction vector and have no distance-based attenuation, simulating infinitely distant light sources like the sun with parallel light rays. Both light types support full Phong shading with diffuse and specular components, and both cast shadows by tracing shadow rays to test for occlusion from other objects in the scene.
+Directional lights, on the other hand, are defined by a direction vector and have no distance-based attenuation, simulating infinitely distant light sources like the sun with parallel light rays. Both light types support full Phong shading with diffuse and specular components (see <<phong-model>> for details), and both cast shadows by tracing shadow rays (see <<shadows, Shadows>> for more) to test for occlusion from other objects in the scene. See <<typesoflights>> for examples. Below is a diagram from Gambetta, showing two directional lights at different positions (with the same direction, here our `x y z`), will emit parallel rays, since these are simply a light source at infinity (or in PGA, a light source with a direction). 
 
-[#spot-lights]
+[.text-center]
+image:https://gabrielgambetta.com/computer-graphics-from-scratch/images/05-directional-light.png[directional-light-diagram]
+
+.Varying `directional_light` with (r, g, b | x, y, z) listed
+[cols="^1,^1,^1"]
+|===
+|image:Images/directional_lights/directional_light_single.png[directionalLightSingle] + 
+`(5,5,5, -1,1,0)`
+|image:Images/directional_lights/directional_light_multiple.png[directionalLightMultiple] + 
+`(5,5,5, -1.0,1.0,0.0)` +
+`(2,2,2,  2.0,0.5,2.8)` +
+`(5,5,5,  0.0,3.0,3.0)`
+|image:Images/directional_lights/directional_light_colors.png[directionalLightColors] + 
+`(5.0,0.1,0.1, -1.0,1.0,0.0)` +
+`(0.1,5.0,0.1,  2.0,0.5,2.8)` +
+`(0.1,0.1,5.0,  0.0,3.0,3.0)`
+|===
+
+===== Spot Lights
+
+[#spot-lights, Spot Lights]
 ----
 spot_light: r g b  x y z  dx dy dz  angle1 angle2
 ----
 
-Spot lights extend the point light model with directional constraints, creating cone-shaped illumination patterns defined by an inner and outer angle. Light intensity smoothly transitions from full brightness within the inner cone to zero at the outer cone boundary using cosine-based falloff. While the spot light class is implemented in the Lighting.h header, the scene parser support is currently a work in progress.
+Spot lights extend the point light model with directional constraints, creating cone-shaped illumination patterns defined by an inner and outer angle. Light intensity smoothly transitions from full brightness within the inner cone to zero at the outer cone boundary using cosine-based falloff. The spot light class is implemented in the `Lighting.h` header. See <<typesoflights>> for examples. 
 
-.Types of lights
+Below is a diagram of a spot light showing the point and the inner and outer angles on a spot light.
+
+[.text-center]
+image:https://www.povray.org/documentation/images/reference/spotgeom.png[spot-light-diagram]
+
+.Varying `spot_light` with (r, g, b | x, y, z) listed
 [cols="^1,^1,^1"]
 |===
-|image:Images/point_directional_lights/point_light_sphere.png[pointSphere] + 
-`point_light: 0 .5 0 1 0 1`
-|image:Images/point_directional_lights/directional_light_sphere.png[directionalSphere] + 
-`directional_light: 0 .5 0 1 0 1`
-|image:Images/point_directional_lights/spot_light_sphere.png[spotSphere] + 
-`spot_light: 0 .5 0 1 0 1 0 1 2 45 90`
+|image:Images/spot_lights/spot_light_single.png[spotLightSingle] + 
+`1 1 1   0 0.7 0.8   0 -1 -.2   45 60`
+|image:Images/spot_lights/spot_light_multiple.png[spotLightMultiple] + 
+`(1 1 1   -0.6 0.3 0.8   0 -1 -.2   45 60)` +
+`(1 1 1   0 0.7 0.8   0 -1 -.2   45 60)` +
+`(1 1 1   0.6 0.3 0.8   0 -1 -.2   45 60)`
+|image:Images/spot_lights/spot_light_colors.png[spotLightColors] + 
+`(1 0 0   -0.6 0.3 0.8   0 -1 -.2   45 60)` +
+`(0 1 0   0 0.7 0.8   0 -1 -.2   45 60)` +
+`(0 0 1   0.6 0.3 0.8   0 -1 -.2   45 60)`
 |===
+
+As we can see above, we have a nice 45 degree cone of solid light at the center and the 15 degree halo that drops off with a cosine falloff. 
 
 ==== Shadows
 
@@ -266,17 +359,23 @@ Shadows are computed by casting shadow rays from each surface point toward every
 ==== Reflection
 
 [#reflections]
-Reflections are computed recursively by casting reflected rays from surface intersection points in the mirror direction determined by the surface normal. The reflection direction is calculated using the formula stem:[\vec{r} = \vec{d} - 2(\vec{d} \cdot \vec{n})\vec{n}], where stem:[\vec{d}] is the incident ray direction and stem:[\vec{n}] is the surface normal. The reflected ray's color contribution is weighted by the material's specular coefficient and added to the surface shading, with recursion continuing until the maximum ray depth is reached or the energy contribution becomes negligible.
+Reflections are computed recursively by casting reflected rays from surface intersection points in the mirror direction determined by the surface normal. The reflection direction is calculated using the formula stem:[\vec{r} = \vec{d} - 2(\vec{d} \cdot \vec{n})\vec{n}], where stem:[\vec{d}] is the incident ray direction and stem:[\vec{n}] is the surface normal. 
+
+// The reflected ray's color contribution is weighted by the material's specular coefficient and added to the surface shading, with recursion continuing until the maximum ray depth is reached or the energy contribution becomes negligible.
+
+I recursively trace this reflected ray with decremented depth to gather the color of what the surface "sees" in the reflection direction, supporting multiple bounces of light through the scene. The resulting reflected color is then blended with the surface's local lighting by multiplying each RGB channel by the material's specular reflection coefficients `(sr, sg, sb)`, allowing colored or tinted reflections like metallic surfaces. For pure dielectric materials like glass, I use Schlick's approximation of the Fresnel equations to physically blend reflection and refraction based on viewing angle, with grazing angles producing stronger reflections. 
+// I also distinguish between metals (pure reflection) and transmissive materials (glass), skipping redundant Phong specular highlights on glass to avoid double-counting the specular component that's already captured in the recursive reflections.
 
 .Examples showing reflections
-[cols="^1,^1"]
+[cols="^.^1,^.^1"]
 |===
 |image:Images/materials_diffuse_specular_reflection_refraction/mirror_reflection.png[mirror]
 |image:Images/materials_diffuse_specular_reflection_refraction/reflection_spheres.png[reflectionSpheres]
 |image:Images/materials_diffuse_specular_reflection_refraction/gear.png[gear]
-|
-// |image:Images/materials_diffuse_specular_reflection_refraction/three_lights.png[mirror]
+|image:Images/materials_diffuse_specular_reflection_refraction/ambient_cornellbox.png[cornellbox, 350]
 |===
+
+In the middle image we see a highly reflective mirror ball in the center. We are getting a nice reflected image, where all six colored spheres are visible from the warped perspective from reflecting of the mirror sphere. I placed the spheres at different angles to the sides, above, and in front of the mirror ball. You can even see some of the multiple reflections bouncing between spheres of the reflection itself. These, however are limited by our max depth. Furthermore, on the gear we see some interesting reflection with different levels and different normals. And finally, with the cornellbox, we see the reflective glass sphere on the back right of the image, as well as pleasing reflections off the ceiling, walls, and floors. 
 
 ==== Refraction
 
@@ -292,7 +391,6 @@ Beer Lambert Law is not currently implemented for absorption within transmissive
 |image:Images/materials_diffuse_specular_reflection_refraction/watch_blue_and_gold_cropped.png[watchRefraction]
 // |image:Images/materials_diffuse_specular_reflection_refraction/reflection_spheres.png[reflectionSpheres]
 // |image:Images/materials_diffuse_specular_reflection_refraction/gear.png[gear]
-|
 // |image:Images/materials_diffuse_specular_reflection_refraction/three_lights.png[mirror]
 |===
 
@@ -321,6 +419,11 @@ Colors in the raytracer are represented as floating-point RGB triplets and are c
 `(0.3,0.3,0.9)`
 |===
 
+We use a similar understanding of color for all the colors that are being rendered on our screen. This applies to lights and material properties. I think that this example, show above in <<spot-lights, Spot Lights>> nicely shows off the color mixing in our ray tracer. As you can see we get a nice fuschia with mixing red and blue light (mixed with some dark grey from the ground), and then we have this nice gradient from cyan to yellow in the middle, and then on the farthest edge of the reflected shadow we have a nice area of green. 
+
+[.text-center]
+image:Images/spot_lights/color_mixing.png[colorMixing]
+
 ==== Materials
 
 [#materials]
@@ -330,6 +433,7 @@ material: ar ag ab  dr dg db  sr sg sb  ns  tr tg tb  ior
 
 Materials define how surfaces interact with light through four color components: ambient (ar,ag,ab), diffuse (dr,dg,db), specular (sr,sg,sb), and transmissive (tr,tg,tb), along with a Phong exponent (ns) and index of refraction (ior). The final visible color at each surface point is computed by combining the ambient contribution, diffuse lighting from all visible lights, specular highlights, and optionally reflected/refracted light from recursive ray tracing. Each material component is multiplied with the corresponding light contribution and summed to produce the final pixel color, which is then clamped and tone-mapped for display.
 
+[.text-center]
 image:Images/materials_diffuse_specular_reflection_refraction/phong_lighting.png[phongLighting]
 
 ----
@@ -359,19 +463,90 @@ We see clear specular reflections on the yellow mirror sphere and the cyan spher
 
 The Phong lighting model is used to compute local illumination at each surface point by summing ambient, diffuse, and specular components. The diffuse term uses Lambert's cosine law stem:[I_d = k_d(\vec{L} \cdot \vec{N})] where stem:[\vec{L}] is the light direction and stem:[\vec{N}] is the surface normal. The specular term uses the Phong reflection model stem:[I_s = k_s(\vec{R} \cdot \vec{V})^{n_s}] where stem:[\vec{R}] is the reflected light direction, stem:[\vec{V}] is the view direction, and stem:[n_s] controls highlight sharpness; we compute stem:[\vec{R}] by reflecting the light direction around the normal rather than using the half-vector (Blinn-Phong) approximation.
 
+[#phong-equation]
+++++
+\begin{equation}
+I = I_E + K_A I_A + \sum_{L}(K_D (N \cdot L) + K_S (V \cdot R)^n)S_L I_L + K_R I_R + K_T K_T
+\end{equation}
+++++
+
+Where stem:[N] is the normal to the surface, stem:[V] is the direction of the camera, stem:[L] is the direction of the light, and stem:[R] is the direction reflection from the surface. The stem:[I_i] terms correspond to the emissive stem:[(I_E)], ambient stem:[(I_A)], diffuse stem:[(I_D)], intensity stem:[(I_s)], reflective radiance stem:[(I_R)], and refractive radiance stem:[(I_T)] of the light. 
+The constant stem:[K_i] terms correspond similarly to the ambient response stem:[(K_A)], diffuse response stem:[(K_D)], spectral response stem:[(K_S)], reflective coefficient stem:[(K_R)], and transparency coeficient stem:[(K_T)]. 
+To other to terms are the Phong specular exponent stem:[(n)] and the shadow term stem:[S_L], which is a boolean that describes if the ray is blocked by an object or not. 
+
 ===== Diffuse lighting
 
 [#diffuse-lighting]
-Diffuse lighting simulates matte surface reflection using Lambertian shading, where surface brightness is proportional to the cosine of the angle between the surface normal and light direction. For each light source, the diffuse contribution is calculated as stem:[C_d = I_{light} \cdot k_d \cdot \max(0, \vec{N} \cdot \vec{L})] where stem:[I_{light}] is the light intensity, stem:[k_d] is the material diffuse color, stem:[\vec{N}] is the surface normal, and stem:[\vec{L}] is the light direction. The max() function ensures that surfaces facing away from lights receive no diffuse contribution, and distance attenuation is applied for point lights.
+Diffuse lighting simulates matte surface reflection using Lambertian shading, where surface brightness is proportional to the cosine of the angle between the surface normal and light direction. For each light source, the diffuse contribution is calculated as 
 
-image:Images/materials_diffuse_specular_reflection_refraction/arm-reach.png[armReach, 300]
+[#diffuse-equation]
+++++
+\begin{equation}
+I_D = K_D \max(0, (N \cdot L)) S_L I_L
+\end{equation}
+++++
+
+where stem:[I_{L}] is the light intensity, stem:[K_D] is the material diffuse color, stem:[\vec{N}] is the surface normal, and stem:[\vec{L}] is the light direction. The stem:[\max()] function ensures that surfaces facing away from lights receive no diffuse contribution, and distance attenuation is applied for point lights.
+
+[cols="^1,^1"]
+|===
+|image:Images/materials_diffuse_specular_reflection_refraction/arm-reach.png[armReach, 300]
+|image:Images/materials_diffuse_specular_reflection_refraction/arm-top-rotated.png[armTop, 340]
+|===
+
+With the provided scenes with the hands, we see clear diffuse lighting. We see darker portions of the arm that are in shadow. All triangles in this scene have the same material, so the diffuse color is the same for all the triangles. However, we see the nice variation in color due to the normals on those triangles, since the dot product changes the intensity of that overall light. 
 
 ===== Specular lighting
 
 [#specular-lighting]
-Specular lighting creates glossy highlights that vary based on viewing angle, simulating mirror-like reflections from smooth surfaces. The specular component is computed using the Phong model stem:[C_s = I_{light} \cdot k_s \cdot (\vec{R} \cdot \vec{V})^{n_s}] where stem:[k_s] is the material specular color, stem:[\vec{R}] is the reflected light direction, stem:[\vec{V}] is the view direction, and stem:[n_s] is the Phong exponent controlling highlight size. Higher exponents create tighter, shinier highlights, while lower values produce broader, more matte reflections; specular highlights only appear when viewing the surface from angles close to the perfect mirror reflection direction.
+Specular lighting creates glossy highlights that vary based on viewing angle, simulating mirror-like reflections from smooth surfaces. The specular component is computed using the Phong model is
 
+[#specular-equation]
+++++
+\begin{equation}
+I_K = K_S (V \cdot R)^n S_L I_L
+\end{equation}
+++++
 
+where stem:[K_S] is the material specular color, stem:[V] is the view direction, stem:[R] is the reflected light direction, and stem:[n] is the Phong exponent controlling highlight size, stem:[S_L] is the shadow term, and stem:[I_L] is the light intensity. Higher exponents create tighter, shinier highlights, while lower values produce broader, more matte reflections. Specular highlights only appear when viewing the surface from angles close to the perfect mirror reflection direction.
+
+[.text-center]
+image:Images/shadows/pokeball.png[pokeball]
+
+In this scene we get nice spectral lighting from 4 different lights. We can see it in the red portion of the pokeball clearly, and then then there's nice spectral highlights on the button of the pokeball. I've made the black center sphere highly diffuse and not spectral, so there's very little spectral components off of that part, and only a small contribution from reflections. 
+
+==== Textures
+
+[#textures, Texture Mapping]
+----
+diffuse_texture: image filename.png
+----
+
+We can use an image or a texture to map a pattern onto a primitive. For *spheres*, UV coordinates are computed lazily using spherical mapping - the surface normal is converted to spherical coordinates (stem:[\phi] = longitude, stem:[\theta] = latitude), then normalized to `[0,1]` range where stem:[u = \frac{\phi + \pi}{2\pi}] and stem:[v = \frac{\theta + \frac{\pi}{2}}{\pi}]. For *triangles*, each vertex stores its own UV coordinates stem:[(u_0, v_0)], stem:[(u_1, v_1)], stem:[(u_2, v_2)], which are interpolated using the barycentric coordinates computed during ray-triangle intersection to determine the UV at the exact hit point. Once UVs are computed, the `ImageTexture::sample()` method clamps them to [0,1], flips the V coordinate (since images have top-left origin but UV space is bottom-left), converts to pixel coordinates, and returns the RGB color at that pixel. For *implicit surfaces* (further explained <<implicit-surfaces, below>>), triplanar mapping projects the texture  from three orthogonal axes (XY, XZ, YZ planes) and blends them based on the surface normal's dominant direction for seamless results.
+
+[.center]
+image:Images/textures/art_exhibit.png[]
+
+From the image above, we can see our textures getting applied to our spheres. We have Earth, Mars, Jupiter, and the Moon textures, with some added lighting. 
+
+[#procedural-texturing, Procedural Texturing]
+----
+diffuse_texture: checker    r1 g1 b1  r2 g2 b2  scale
+diffuse_texture: checker3d  r1 g1 b1  r2 g2 b2  scale
+diffuse_texture: wood       r1 g1 b1  r2 g2 b2  scale turbulence
+diffuse_texture: marble     r1 g1 b1  r2 g2 b2  scale
+----
+
+Procedural texturing generates surface colors algorithmically rather than from image data, including 2D checkerboard patterns, 3D volumetric checkers, wood grain using turbulent noise, and marble patterns with Perlin noise. Textures can be applied to diffuse, specular, and normal map channels of materials, with UV coordinates computed from sphere parameterization for spheres and barycentric interpolation for triangles. For SDF objects without natural UV coordinates, triplanar mapping projects the texture from three orthogonal directions and blends based on surface normal, ensuring seamless coverage on arbitrary implicit surfaces without distortion. 
+
+[#procedural-texture-examples, cols="^4,^3"]
+|===
+|image:Images/textures/textured_spheres.png[]
+|image:Images/textures/textured_cornellbox.png[] 
+|===
+
+Above, we see some interesting procedural texturing in the spheres. From left to right, we have the cyan and magenta sphere with `marble`, the red and purple sphere with `checker`, the `image` center sphere with water caustics, the cyan and fuschia sphere with `checker3d`, and the green and magenta sphere with `wood`. The small blue sphere in front of the mirror ball also has `image` texturing from a cloud phto. 
+Above, in the cornell box, we see some interesting patterned texturing on the floor of the cornell box (`checker3d`), and on the red wall (`wood`), and on the green wall (`marble`) alongside patterned ceiling with the `image` for some water caustics. We get some interesting reflections, and also see that our diffuse texture is not being applied in places where we have shadows. This is a place we could improve our ray tracer, since the texture should really be everywhere on our surface. 
 
 ==== Geometries
 
@@ -382,7 +557,9 @@ Specular lighting creates glossy highlights that vary based on viewing angle, si
 sphere: x y z radius
 ----
 
-Spheres are defined by a center point (x,y,z) and radius, with ray intersection computed analytically using the quadratic formula. The ray-sphere intersection finds parameter t where stem:[||\vec{O} + t\vec{D} - \vec{C}||^2 = r^2], which expands to stem:[at^2 + bt + c = 0] where stem:[a = \vec{D} \cdot \vec{D}], stem:[b = 2\vec{D} \cdot (\vec{O} - \vec{C})], and stem:[c = ||\vec{O} - \vec{C}||^2 - r^2]. The surface normal at any point is computed as stem:[\vec{N} = (\vec{P} - \vec{C})/r], always pointing radially outward from the sphere center, enabling accurate shading and reflection calculations.
+Spheres are defined by a center point `(x,y,z)` and `radius`, with ray intersection computed analytically using the quadratic formula. The ray-sphere intersection finds parameter `t`, which is the intersection point on the sphere closest to the ray. We get the projection of the sphere's center on the ray via stem:[(L \cdot p_S)] and calculate the distance from the center to the projection (to ensure that the ray actually hit the sphere). Then we get find those intersection points by getting the scaled radius based on the distance from the projection to the center. Finally, at the nearest point, we calculate the normal by stem:[||p_i - p_S||]. 
+
+// stem:[||\vec{O} + t\vec{D} - \vec{C}||^2 = r^2], which expands to stem:[at^2 + bt + c = 0] where stem:[a = \vec{D} \cdot \vec{D}], stem:[b = 2\vec{D} \cdot (\vec{O} - \vec{C})], and stem:[c = ||\vec{O} - \vec{C}||^2 - r^2]. The surface normal at any point is computed as stem:[\vec{N} = (\vec{P} - \vec{C})/r], always pointing radially outward from the sphere center, enabling accurate shading and reflection calculations.
 
 .Examples with spheres
 [cols="^1,^1"]
@@ -403,6 +580,15 @@ triangle: v0 v1 v2
 
 Triangles without vertex normals use the Möller-Trumbore intersection algorithm for efficient ray-triangle intersection testing. The algorithm computes barycentric coordinates stem:[(u, v)] and intersection distance stem:[t] directly without explicitly computing the plane equation, using the formula stem:[\vec{O} + t\vec{D} = (1-u-v)\vec{V}_0 + u\vec{V}_1 + v\vec{V}_2]. The triangle's surface normal is computed as stem:[\vec{N} = (\vec{V}_1 - \vec{V}_0) \times (\vec{V}_2 - \vec{V}_0)] and remains constant across the entire triangle surface, creating flat shading.
 
+.Examples with triangles
+[cols="^.^4,^.^3"]
+|===
+|image:Images/spheres_triangles_backgrounds/triangles/dragon.png[dragon] + 
+`dragon`
+|image:Images/spheres_triangles_backgrounds/triangles/nordic_star.png[triangles] + 
+`compass`
+|===
+
 [#triangles-with-normals]
 ----
 normal: nx ny nz
@@ -411,38 +597,88 @@ normal_triangle: v0 v1 v2  n0 n1 n2
 
 Triangles with vertex normals extend the basic triangle by interpolating normals across the surface using barycentric coordinates for smooth shading. At the intersection point with barycentric coordinates stem:[(u, v)], the shading normal is computed as stem:[\vec{N} = (1-u-v)\vec{N}_0 + u\vec{N}_1 + v\vec{N}_2] and then normalized. This allows triangle meshes to approximate curved surfaces by smoothly varying the normal across faces, producing much more realistic shading than flat-shaded triangles while maintaining the same geometric representation.
 
-===== Constructive Solid Geometry
+.Examples with triangles
+[cols="^.^4,^.^3"]
+|===
+|image:Images/shadows/plant.png[plant] + 
+`plant`
+|image:Images/spheres_triangles_backgrounds/triangles/nordic_star_normals.png[trianglesNormals] + 
+`compass with normals`
+|===
 
-[#csg]
-----
-sphere: x y z radius           # Define component spheres
-csg_union: base_idx op1 op2... # Combine with union
-csg_difference: base_idx op1...# Subtract operands
-csg_intersection: base_idx op1...# Keep only overlap
-----
+===== Constructive Solid Geometry
 
 Constructive Solid Geometry (CSG) allows complex shapes to be built by combining primitive spheres using boolean operations, enabling the creation of sophisticated models like gears, mechanical parts, and architectural elements from simple building blocks. CSG objects are represented by a base sphere and one or more operand spheres, with the operation type (union, difference, or intersection) determining how they combine to form the final shape. The implementation follows an interval-based approach: ray intersection with CSG objects requires finding all entry/exit points (t-values) with component spheres, constructing intervals where the ray is inside each sphere, and then combining these intervals according to the CSG operation to determine the final surface boundaries.
 
-Our CSG implementation is defined in `Geometries.h` using the `CSGObject` class, which stores the operation type, base sphere, and a vector of operand spheres. The scene parser allows users to first define individual spheres using standard `sphere:` commands, then reference them by index in CSG commands. For example, defining `sphere: 0 0 0 1.0` followed by `sphere: 0.5 0 0 0.6` creates two spheres at indices 0 and 1; the command `csg_difference: 0 1` then creates a CSG object where sphere 1 is carved out of sphere 0, producing a spherical cavity.
+[#csg, Costructive solid geometry]
+----
+sphere: x y z radius                      # Define component spheres
+csg_union: base_idx op1 [op2]...          # Combine with union
+csg_difference: base_idx op1 [op2]...     # Subtract 
+csg_intersection: base_idx op1 [op2]...   # Keep only overlap
+----
 
-The CSG intersection algorithm in `RayInteractions.h:intersectCSG()` handles each operation type differently:
+.Boolean operations for CSG
+[cols="^1,^1,^1"]
+|===
+|image:https://www.povray.org/documentation/images/reference/unionobj.png[union] + 
+union: stem:[A \cap B]
+|image:https://www.povray.org/documentation/images/reference/diffobj.png[difference] + 
+difference: stem:[A - B]
+|image:https://www.povray.org/documentation/images/reference/isectobj.png[intersection] + 
+intersection: stem:[A \cup B]
+|===
+
+Our CSG implementation is defined in `Geometries.h` using the `CSGObject` class, which stores the operation type, base sphere, and a vector of operand spheres. The scene parser allows users to first define individual spheres using standard `sphere:` commands, then reference them by index in CSG commands. For example, defining `sphere: 0 0 0 1.0` followed by `sphere: 0.5 0 0 0.6` creates two spheres at indices 0 and 1; the command `csg_difference: 0 1` then creates a CSG object where sphere 1 is carved out of sphere 0, producing a spherical cavity. Note, one limitation of my current implementation is that is only works with spheres. I did not have time to add triangles. 
+
+The CSG intersection algorithm in `RayInteractions.h:intersectCSG()` handles each operation type differently. 
+
+.Examples of `csg_union`, `csg_difference`, `csg_intersection`
+[cols="^1,^1,^1"]
+|===
+|image:Images/constructive_solid_geometry/csg_operations_basic.png[csgOperationsBasic] + 
+`csg_union` + 
+`csg_intersection` + 
+`csg_difference`
+|image:Images/constructive_solid_geometry/csg_operations_multiple_difference.png[csgOperationsMultipleDifference] + 
+`difference with three spheres` + 
+`(sphere: 0.3 1 4.9 1.0)` + 
+`(sphere: 0.3 1 5.5 1.0)` + 
+`(sphere: 0.3 1 6.1 1.0)` + 
+`(csg_difference: 2 1 3)`
+|image:Images/constructive_solid_geometry/csg_operations_multiple_intersection.png[csgOperationsMultipleIntersection] + 
+`intersection with three spheres` + 
+`(sphere: 0 0 8 2.1)` +
+`(sphere: 1 0 8 2.1)` +
+`(sphere: 0.5 1.414 8 2.1)` +
+`(csg_intersection: 1 2 3)` 
+|===
+
+====== Union
 
 [#csg-union]
-**Union operations** combine multiple spheres into a single object by taking the closest intersection among all components, effectively creating a merged shape where any point inside at least one component sphere is considered inside the CSG object. When a ray intersects a CSG union, the raytracer tests the ray against the base sphere and all operand spheres using standard ray-sphere intersection, collecting all intersection points and selecting the one with the smallest positive t value (closest to the camera). The surface normal at the intersection point is taken from whichever component sphere was actually hit, ensuring proper shading at the boundaries between merged primitives. This is the simplest CSG operation computationally, as it requires only finding the minimum t value among all hits, with no complex interval arithmetic. Union operations are useful for modeling organic forms, collections of objects treated as a single entity, or quick approximations of smooth blending between shapes.
+**Union operations** combine multiple spheres into a single object by taking the closest intersection among all components, effectively creating a merged shape where any point inside at least one component sphere is considered inside the CSG object. Our implementation, the merged shape takes the original material of the first input shape, so `base_idx`. When a ray intersects a CSG union, the raytracer tests the ray against the base sphere and all operand spheres using standard ray-sphere intersection, collecting all intersection points and selecting the one with the smallest positive `t` value (closest to the camera), which is depicted below in the diagram by `a0`. The surface normal at the intersection point is taken from whichever component sphere was actually hit, ensuring proper shading at the boundaries between merged primitives. This is the simplest CSG operation computationally, as it requires only finding the minimum `t` value among all hits, with no complex interval arithmetic. Union operations are useful for modeling organic forms, collections of objects treated as a single entity, or quick approximations of smooth blending between shapes.
+
+[.text-center]
+image:https://www.fotonixx.com/images/efficient_csg/example_hits.png[200]
+
+====== Difference
 
 [#csg-difference]
 **Difference operations** carve away operand spheres from a base sphere, creating hollow or sculpted shapes by subtracting volumes from the base geometry. The ray intersection algorithm computes entry/exit intervals for both the base and all operand spheres, using interval arithmetic to construct the final surface: for each operand sphere, we compute where the ray enters (t_enter) and exits (t_exit) that sphere, then remove these intervals from the base sphere's intervals to determine where the ray is inside the base but outside all operands. When a ray enters an operand sphere while inside the base (entering a carved-out cavity), the operand's inward-facing surface becomes the new boundary, with its normal flipped to point into the cavity for proper lighting. This creates the distinctive "hollowed out" appearance where you can see inside the removed volume.
 
 The algorithm works by first finding the base sphere's entry and exit points, then iterating through each operand sphere to find subtractive intervals. If the ray enters an operand while inside the base (t_enter_operand is between t_enter_base and t_exit_base), we create a hit at t_enter_operand with the operand's inward normal (flipped). Similarly, if the ray exits an operand while inside the base, the surface continues from that point. This allows complex carved shapes like Swiss cheese, mechanical parts with holes, or architectural elements with doorways and windows. The challenge is handling overlapping operands correctly and ensuring the closest valid surface point is returned.
 
+====== Intersection
+
 [#csg-intersect]
 **Intersection operations** keep only the region where all component spheres overlap, creating the common volume shared by all primitives—essentially the "AND" operation in boolean logic. The ray intersection finds overlapping t-intervals by computing the maximum entry point (last sphere the ray enters) and minimum exit point (first sphere the ray exits) among all spheres. Only if the maximum entry is less than the minimum exit does a valid intersection exist, indicating the ray passes through a region inside all spheres simultaneously. The surface normal is taken from the sphere providing the maximum entry point (the last sphere the ray enters), as this sphere defines the visible boundary of the intersection volume.
 
-Algorithmically, intersection CSG works by finding all t_enter and t_exit values for the base and operand spheres, then computing stem:[t_{enter,final} = \max(t_{enter,base}, t_{enter,op1}, t_{enter,op2}, ...)] and stem:[t_{exit,final} = \min(t_{exit,base}, t_{exit,op1}, t_{exit,op2}, ...)]. If stem:[t_{enter,final} < t_{exit,final}] and both are positive, the ray intersects the CSG object at stem:[t_{enter,final}]. This operation is useful for creating complex shapes by constraining geometry to specific regions, such as a sphere clipped by planes (using sphere-sphere intersection to approximate planes) or creating precise geometric constructions like geodesic domes or molecular models where atoms overlap at specific bonding sites.
+Algorithmically, intersection CSG works by finding all t_enter and t_exit values for the base and operand spheres, then computing stem:[t_{\text{enter,final}} = \max(t_{\text{enter,base}}, t_{\text{enter,op1}}, t_{\text{enter,op2}, ...})] and stem:[t_{\text{exit,final}} = \min(t_{\text{exit,base}}, t_{\text{exit,op1}}, t_{\text{exit,op2}, ...})]. If stem:[t_{\text{enter,final}} < t_{\text{exit,final}}] and both are positive, the ray intersects the CSG object at stem:[t_{\text{enter,final}}]. This operation is useful for creating complex shapes by constraining geometry to specific regions, such as a sphere clipped by planes (using sphere-sphere intersection to approximate planes) or creating precise geometric constructions like geodesic domes or molecular models where atoms overlap at specific bonding sites.
 
 ===== Implicit Surfaces
 
-[#implicit-surfaces]
+[#implicit-surfaces, Implicit Surfaces]
 ----
 # Basic SDF primitives
 sdf_sphere: x y z radius
@@ -451,40 +687,14 @@ sdf_plane_oriented: vertex_idx normal_idx
 sdf_torus: x y z major_radius minor_radius
 sdf_cylinder: x y z radius
 sdf_capped_cylinder: x y z radius half_height
-
-# Oriented SDF primitives (using vertex/normal pools)
-sdf_plane_oriented: vertex_idx normal_idx
-sdf_quad_oriented: vertex_idx half_width half_height normal_idx
-sdf_box_oriented: vertex_idx hx hy hz normal_idx
-sdf_torus_oriented: vertex_idx major minor normal_idx
-sdf_cylinder_oriented: vertex_idx radius normal_idx
-sdf_capped_cylinder_oriented: vertex_idx radius half_height normal_idx
-
-# Fractal SDFs
-sdf_mandelbulb: x y z iterations power
-sdf_mandelbox: x y z iterations scale
-sdf_menger_sponge: x y z iterations
-
-# SDF boolean operations
-sdf_union: base_idx operand1 operand2...
-sdf_intersection: base_idx operand1 operand2...
-sdf_difference: base_idx operand1 operand2...
-
-sdf_smooth_union: smoothing_factor base_idx operand1 operand2...
-sdf_smooth_intersection: smoothing_factor base_idx operand1 operand2...
-sdf_smooth_difference: smoothing_factor base_idx operand1 operand2...
 ----
 
 
-Implicit surfaces represent one of the most powerful and flexible approaches to geometric modeling in computer graphics, defining shapes mathematically through signed distance functions (SDFs) that return the distance from any point in space to the nearest surface. The "signed" aspect is crucial: the function returns positive values for points outside the shape, negative values for points inside, and exactly zero on the surface boundary. This mathematical representation enables several key advantages over explicit geometry:
+Implicit surfaces represent one of the most powerful and flexible approaches to geometric modeling in computer graphics, defining shapes mathematically through signed distance functions (SDFs) that return the distance from any point in space to the nearest surface. The "signed" aspect is key: the function returns positive values for points outside the shape, negative values for points inside, and exactly zero on the surface boundary. This mathematical representation enables several key advantages over explicit geometry. SDFs are resolution-independent—zooming in arbitrarily close to the surface never reveals polygonal facets or discretization artifacts, so we can get nearly infinite amount of details. In particular, fractals, organic forms, and mathematical surfaces (like Mandelbulb or Mandelbox) can be expressed compactly as formulas rather than massive polygon meshes. 
 
-1. **Infinite detail**: SDFs are resolution-independent—zooming in arbitrarily close to the surface never reveals polygonal facets or discretization artifacts.
+In addition, we have SDF-based boolean operations which use smooth minimum/maximum functions to create organic blending between shapes, making more varied combinations and control over the combination, unlike CSG on explicit geometry which has sharp joins. 
 
-2. **Complex shapes**: Fractals, organic forms, and mathematical surfaces (like Mandelbulb or Mandelbox) can be expressed compactly as formulas rather than massive polygon meshes.
-
-3. **Smooth boolean operations**: Unlike CSG on explicit geometry, SDF-based boolean operations can use smooth minimum/maximum functions to create organic blending between shapes.
-
-4. **Efficient transformations**: Translation, rotation, and scaling of SDFs can often be implemented by transforming the query point rather than the geometry itself.
+Finally, transformations like translation, rotation, and scaling of SDFs can often be implemented by transforming the query point rather than the entire geometry itself.
 
 Our implementation in `SDF.h` defines an abstract `SDF` base class with a pure virtual `evaluate(Point3D p)` method that returns the signed distance at any point. Derived classes implement specific primitives:
 
@@ -498,6 +708,9 @@ Our implementation in `SDF.h` defines an abstract `SDF` base class with a pure v
 
 - **SDFTorus**: Computed as stem:[d(\vec{p}) = \sqrt{(\sqrt{x^2 + z^2} - R)^2 + y^2} - r] where stem:[R] is the major radius and stem:[r] is the minor (tube) radius. The formula works by first projecting to the ring in the XZ plane, then computing distance to the circular cross-section.
 
+[.text-center]
+image:Images/implicit_surfaces/sdf_primitives.png[]
+
 **Oriented SDF Variants:**
 
 Many SDF primitives have "oriented" variants that support arbitrary rotations specified through normal vectors from the scene's vertex/normal pools. For example, `sdf_plane_oriented` uses a vertex index to define a point on the plane and a normal index for orientation, computing the distance as stem:[d = (\vec{p} - \vec{p}_0) \cdot \vec{n}]. These oriented primitives use rotation matrices internally to transform query points into the primitive's local coordinate system, evaluate the canonical SDF, and then transform results back to world space.
@@ -508,18 +721,45 @@ The oriented variants are particularly useful for:
 - Building procedural scenes where orientation is computed algorithmically
 - Ensuring consistency with the vertex/normal pool system used for triangles
 
+[#implicit-surfaces-rotation, Orientable Implicit Surfaces]
+----
+# Oriented SDF primitives (using vertex/normal pools)
+sdf_plane_oriented: vertex_idx normal_idx
+sdf_quad_oriented: vertex_idx half_width half_height normal_idx
+sdf_box_oriented: vertex_idx hx hy hz normal_idx
+sdf_torus_oriented: vertex_idx major minor normal_idx
+sdf_cylinder_oriented: vertex_idx radius normal_idx
+sdf_capped_cylinder_oriented: vertex_idx radius half_height normal_idx
+----
+
 .Examples of oriented SDF primitives
-[cols="^1,^1,^1"]
+[cols="^.^1,^.^1,^.^1"]
 |===
 | image:Images/implicit_surfaces/tori_illusion.png[toriIllusion] + 
-`sdf_mandelbulb: 0 0 0 7 6`
+Toruses rotated, inside perspective
 | image:Images/implicit_surfaces/tori_ring.png[toriRing] + 
-`sdf_mandelbox: 0 0 0 5 2`
+Toruses rotation, outside perspective
 | image:Images/implicit_surfaces/pumpkin.png[pumpkin] + 
-`sdf_menger_sponge: 0 0 0 4`
+A festive pumpkin
 |===
 
 **Fractal SDFs:**
+
+[#implicit-surfaces-complex, Fractal Implicit Surfaces]
+----
+# Fractal SDFs
+sdf_mandelbulb: x y z iterations power
+sdf_mandelbox: x y z iterations scale
+sdf_menger_sponge: x y z iterations
+----
+
+Fractals represent some of the most visually stunning applications of SDF rendering, creating infinitely detailed structures through iterative point transformations:
+
+- **Mandelbulb**: A 3D generalization of the Mandelbrot set using spherical coordinates. The SDF is computed by iterating stem:[\vec{z} \leftarrow \vec{z}^n + \vec{c}] in polar form, tracking both the escape distance and derivative magnitude to compute the distance estimate stem:[d \approx \frac{1}{2} \log(r) \cdot \frac{r}{dr}].
+
+- **Mandelbox**: Uses "box folding" and "sphere folding" operations iteratively, creating cube-like structures at multiple scales. The algorithm folds coordinates greater than 1.0, applies spherical inversions for points inside a fixed radius, then scales and translates.
+
+- **Menger Sponge**: A recursive cube-based fractal that subdivides and removes cross-shaped sections at each iteration level, creating a sponge-like structure with fractal dimension ≈ 2.727.
 
 .Examples of fractal SDFs
 [cols="^1,^1,^1"]
@@ -532,26 +772,40 @@ The oriented variants are particularly useful for:
 `sdf_menger_sponge: 0 0 0 4`
 |===
 
-
-Fractals represent some of the most visually stunning applications of SDF rendering, creating infinitely detailed structures through iterative point transformations:
-
-- **Mandelbulb**: A 3D generalization of the Mandelbrot set using spherical coordinates. The SDF is computed by iterating stem:[\vec{z} \leftarrow \vec{z}^n + \vec{c}] in polar form, tracking both the escape distance and derivative magnitude to compute the distance estimate stem:[d \approx \frac{1}{2} \log(r) \cdot \frac{r}{dr}].
-
-- **Mandelbox**: Uses "box folding" and "sphere folding" operations iteratively, creating cube-like structures at multiple scales. The algorithm folds coordinates greater than 1.0, applies spherical inversions for points inside a fixed radius, then scales and translates.
-
-- **Menger Sponge**: A recursive cube-based fractal that subdivides and removes cross-shaped sections at each iteration level, creating a sponge-like structure with fractal dimension ≈ 2.727.
-
 These fractals are expensive to render (requiring 8-20 SDF evaluations per iteration, times multiple marching steps), but produce results impossible to achieve with traditional polygon modeling.
 
 **SDF Boolean Operations:**
 
 Boolean operations on SDFs are implemented through simple arithmetic on distance values:
 
+
+[#implicit-surfaces-combination, Implicit Surface Combination]
+----
+# SDF boolean operations
+sdf_union: base_idx operand1 operand2...
+sdf_intersection: base_idx operand1 operand2...
+sdf_difference: base_idx operand1 operand2...
+
+sdf_smooth_union: smoothing_factor base_idx operand1 operand2...
+sdf_smooth_intersection: smoothing_factor base_idx operand1 operand2...
+sdf_smooth_difference: smoothing_factor base_idx operand1 operand2...
+----
+
 - **Union**: stem:[d_{union}(\vec{p}) = \min(d_1(\vec{p}), d_2(\vec{p}))] — take the minimum distance to either surface
 - **Intersection**: stem:[d_{intersect}(\vec{p}) = \max(d_1(\vec{p}), d_2(\vec{p}))] — take the maximum distance (both must be satisfied)
 - **Difference**: stem:[d_{diff}(\vec{p}) = \max(d_1(\vec{p}), -d_2(\vec{p}))] — subtract by negating the second field
 
 These operations combine instantly at render time (unlike polygon CSG which requires complex mesh operations), and can be enhanced with smooth minimum/maximum functions for organic blending: stem:[smin(a,b,k) = \min(a,b) - \frac{h^2}{4k}] where stem:[h = \max(k - |a-b|, 0)].
+
+[cols="^.^,^.^"]
+|===
+|image:Images/implicit_surfaces/sdf_operations.png[] + 
+`sdf_union` (gold) + 
+`sdf_union` (blue)  
+|image:Images/implicit_surfaces/sdf_operations_smooth.png[] + 
+`sdf_smooth_union: 0.25` (gold) +
+`sdf_smooth_union: 0.75` (blue)
+|===
 
 **SDF Transformation Wrapper:**
 
@@ -590,7 +844,7 @@ where stem:[\vec{k}_i] are offset vectors arranged tetrahedrally with magnitude 
 
 Several optimizations make ray marching practical for interactive rendering:
 
-- **Adaptive epsilon**: The surface threshold epsilon is set relatively large (0.003) compared to geometric precision, trading perfect accuracy for 2-3× fewer steps.
+- **Adaptive epsilon**: The surface threshold epsilon is set relatively large (0.003) compared to geometric precision, trading perfect accuracy for 2-3x fewer steps.
 
 - **Early termination**: Rays that escape beyond 50 units after 10 steps are immediately culled, assuming they'll never hit anything.
 
@@ -610,20 +864,7 @@ SDF objects integrate seamlessly with the existing raytracer infrastructure thro
 
 When a ray intersects an `SDFObject`, the `intersectSDF()` function in `RayInteractions.h` calls `rayMarch()` with the SDF's root node, converting the returned `RayMarchResult` (containing hit point, normal, and t-value) into a standard `HitRecord` for shading. This uniform interface allows SDFs to participate in all rendering features: shadows, reflections, refractions, texturing, and acceleration structures work identically whether the underlying geometry is explicit or implicit.
 
-The main performance trade-off is that ray-marched SDFs require 50-128 function evaluations per ray (versus 1 evaluation for analytical primitives), making them 10-50× slower per intersection test. However, for shapes that would require millions of triangles to approximate (fractals, smooth CSG), SDFs remain the only practical option.
-
-==== Textures
-
-[#procedural-texturing]
-----
-diffuse_texture: checker  r1 g1 b1  r2 g2 b2  scale
-diffuse_texture: checker3d  r1 g1 b1  r2 g2 b2  scale
-diffuse_texture: wood     r1 g1 b1  r2 g2 b2  scale turbulence
-diffuse_texture: marble   r1 g1 b1  r2 g2 b2  scale
-diffuse_texture: image    filename.png
-----
-
-Procedural texturing generates surface colors algorithmically rather than from image data, including 2D checkerboard patterns, 3D volumetric checkers, wood grain using turbulent noise, and marble patterns with Perlin noise. Textures can be applied to diffuse, specular, and normal map channels of materials, with UV coordinates computed from sphere parameterization for spheres and barycentric interpolation for triangles. For SDF objects without natural UV coordinates, triplanar mapping projects the texture from three orthogonal directions and blends based on surface normal, ensuring seamless coverage on arbitrary implicit surfaces without distortion. 
+The main performance trade-off is that ray-marched SDFs require 50-128 function evaluations per ray (versus 1 evaluation for analytical primitives), making them 10-50x slower per intersection test. However, for shapes that would require millions of triangles to approximate (fractals, smooth CSG), SDFs remain the only practical option.
 
 === Optimization
 
@@ -633,7 +874,7 @@ Procedural texturing generates surface colors algorithmically rather than from i
 # Configured in raytracer.cpp: samplesPerPixel = 8
 ----
 
-Anti-aliasing is achieved through stochastic supersampling, casting multiple rays per pixel with randomized offsets sampled from a Gaussian distribution (σ=0.3, clamped to ±0.5 pixels). For each pixel, 8 rays are cast with slightly different directions computed by perturbing the pixel center coordinates, and the resulting colors are averaged to produce the final pixel value. This technique effectively reduces jagged edges (aliasing artifacts) along geometric boundaries and produces softer, more photorealistic images compared to single-sample rendering, at the cost of 8× more ray-geometry intersection tests.
+Anti-aliasing is achieved through stochastic supersampling, casting multiple rays per pixel with randomized offsets sampled from a Gaussian distribution (σ=0.3, clamped to ±0.5 pixels). For each pixel, 8 rays are cast with slightly different directions computed by perturbing the pixel center coordinates, and the resulting colors are averaged to produce the final pixel value. This technique effectively reduces jagged edges (aliasing artifacts) along geometric boundaries and produces softer, more photorealistic images compared to single-sample rendering, at the cost of 8x more ray-geometry intersection tests.
 
 ==== Recursion
 
@@ -646,7 +887,7 @@ Recursive ray tracing is used to compute global illumination effects (reflection
 ==== Parallelization
 
 [#parallelization]
-The raytracer uses OpenMP to parallelize the rendering loop across all available CPU cores, distributing pixels among threads with dynamic load balancing. The main pixel iteration loop is parallelized with `#pragma omp parallel for schedule(dynamic, 16)`, where each thread maintains its own random number generator state to avoid contention and ensure reproducible results. Dynamic scheduling with a chunk size of 16 prevents load imbalance caused by varying ray complexity across the image (e.g., some pixels requiring many ray marching steps for SDFs while others hit simple spheres), achieving near-linear speedup; an 8-core system typically renders 7-7.5× faster than single-threaded execution.
+The raytracer uses OpenMP to parallelize the rendering loop across all available CPU cores, distributing pixels among threads with dynamic load balancing. The main pixel iteration loop is parallelized with `#pragma omp parallel for schedule(dynamic, 16)`, where each thread maintains its own random number generator state to avoid contention and ensure reproducible results. Dynamic scheduling with a chunk size of 16 prevents load imbalance caused by varying ray complexity across the image (e.g., some pixels requiring many ray marching steps for SDFs while others hit simple spheres), achieving near-linear speedup; an 8-core system typically renders 7-7.5x faster than single-threaded execution.
 
 ==== Acceleration with Bounding Volume Hierarchy
 
@@ -656,7 +897,7 @@ The raytracer uses OpenMP to parallelize the rendering loop across all available
 accel: bvh  # Can also use: simple, octree, hybrid, none
 ----
 
-The Bounding Volume Hierarchy (BVH) is a spatial acceleration structure that dramatically improves ray tracing performance by organizing scene geometry into a binary tree of axis-aligned bounding boxes (AABBs), allowing rays to skip testing against large groups of objects through efficient hierarchical culling. Rather than testing every ray against every object in the scene (O(n) complexity per ray), the BVH enables logarithmic-time intersection queries by grouping nearby objects together and testing against progressively smaller bounding volumes. This acceleration structure is particularly effective for scenes with thousands of triangles, complex meshes, or mixed geometry types, providing 10-100× speedup over naive linear intersection testing in typical scenarios.
+The Bounding Volume Hierarchy (BVH) is a spatial acceleration structure that dramatically improves ray tracing performance by organizing scene geometry into a binary tree of axis-aligned bounding boxes (AABBs), allowing rays to skip testing against large groups of objects through efficient hierarchical culling. Rather than testing every ray against every object in the scene (O(n) complexity per ray), the BVH enables logarithmic-time intersection queries by grouping nearby objects together and testing against progressively smaller bounding volumes. This acceleration structure is particularly effective for scenes with thousands of triangles, complex meshes, or mixed geometry types, providing 10-100x speedup over naive linear intersection testing in typical scenarios.
 
 **BVH Construction Algorithm:**
 
@@ -697,7 +938,7 @@ The BVH's effectiveness stems from its ability to eliminate large portions of th
 - **Traversal time**: O(log n) average case for point queries, though pathological cases (long rays passing through many nodes) can approach O(n)
 - **Ray coherence**: Primary camera rays exhibit high coherence, often following similar paths through the BVH and benefiting from cache locality
 
-In practice, scenes with 10,000+ triangles see 50-100× speedup, while smaller scenes (100-1000 primitives) see 10-20× improvement. The BVH also benefits all geometry types uniformly—spheres, triangles, CSG objects, and ray-marched SDFs all gain acceleration, with the structure's overhead being minimal (typically <5% of render time for construction).
+In practice, scenes with 10,000+ triangles see 50-100x speedup, while smaller scenes (100-1000 primitives) see 10-20x improvement. The BVH also benefits all geometry types uniformly—spheres, triangles, CSG objects, and ray-marched SDFs all gain acceleration, with the structure's overhead being minimal (typically <5% of render time for construction).
 
 **BVH Variants:**
 
@@ -719,3 +960,16 @@ accel: octree  # Alternative spatial subdivision
 
 An Octree variant is also implemented as an alternative acceleration structure, recursively subdividing 3D space into eight octants (children) and distributing geometry among cells that overlap the primitives' bounding boxes. Unlike BVH which adapts to geometry distribution, the Octree uses uniform spatial subdivision, making it particularly effective for evenly distributed scenes but potentially less optimal for clustered geometry. The octree implementation shares the same interface as the BVH, allowing direct comparison of performance characteristics; in practice, BVH typically outperforms Octree for most scenes due to better adaptivity, though Octree can be advantageous for spatially coherent ray patterns like camera rays in architectural scenes.
 
+
+== Art Submission
+
+.Art Submission
+|image:Images/shadows/pokeball.png[pokeball1, 1200, 900]
+
+To create my submission, I followed the building procedure described above to create one pokeball. I then created two copies, and put them on a diagonal along `z` (to show nice shadows). To create the open pokeball, I needed to do two additional differences to create two halves of the interior black sphere. I then threw in a point light inside the ball to create the red glow, as if there's something inside. I added four point lights in the environment to create some interesting lighting. 
+
+== Access source code
+
+You can access the source code here: https://drive.google.com/file/d/1gWPBcUY6EGGiIUYlj5ACjFjDTcB9en2X/view?usp=sharing, which was compiled on a linux machine. 
+
+`g++ -fsanitize=address -fopenmp -O3 -std=c++17 raytracer.cpp -o raytracer`

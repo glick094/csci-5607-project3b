@@ -1,0 +1,35 @@
+# Camera setup
+camera_pos: -1 1 0
+camera_fwd: -0.5 0 -1
+camera_up: 0 1 0
+camera_fov_ha: 25
+
+# Film settings
+film_resolution: 800 600
+output_image: writeup/ShowcaseScenes/constructive_solid_geometry/csg_operations_multiple_difference.png
+
+# Background color
+background: 0.2 0.2 0.3
+
+# Lighting
+ambient_light: 0.3 0.3 0.3
+point_light: 15 15 15 3 5 2
+point_light: 8 8 8 -3 4 3
+
+# Ground plane
+material: 0.1 0.1 0.1 0.5 0.5 0.5 0.2 0.2 0.2 16 0 0 0 1
+sphere: 0 -1000 8 999
+
+material: 0.1 0.4 0.4 0.3 0.3 0.8 0.5 0.5 0.5 32 0 0 0 1
+sphere: 0.3 1 4.9 1.0
+sphere: 0.3 1 5.5 1.0
+sphere: 0.3 1 6.1 1.0
+csg_difference: 2 1 3
+
+material: 0.7 0.9 0.7 0.3 0.3 0.8 0.5 0.5 0.5 32 0 0 0 1
+sphere: 1.9 1 5 1.0
+sphere: 2.5 1 5 1.0
+sphere: 3.1 1 5 1.0
+csg_difference: 5 4 6
+
+max_depth: 4

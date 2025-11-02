@@ -1,0 +1,29 @@
+# Camera setup
+camera_pos: 0 1 0
+camera_fwd: 0 0 -1
+camera_up: 0 1 0
+camera_fov_ha: 25
+
+# Film settings
+film_resolution: 800 600
+output_image: writeup/ShowcaseScenes/constructive_solid_geometry/csg_operations_multiple_intersection.png
+
+# Background color
+background: 0.2 0.2 0.3
+
+# Lighting
+ambient_light: 0.3 0.3 0.3
+point_light: 15 15 15 3 5 2
+point_light: 8 8 8 -3 4 3
+
+# Ground plane
+material: 0.1 0.1 0.1 0.5 0.5 0.5 0.2 0.2 0.2 16 0 0 0 1
+sphere: 0 -1000 8 999
+
+material: 0.1 0.2 0.1 0.3 0.8 0.3 0.4 0.4 0.4 32 0 0 0 1
+sphere: 0 0 8 2.1
+sphere: 1 0 8 2.1
+sphere: 0.5 1.414 8 2.1
+csg_intersection: 1 2 3
+
+max_depth: 4
